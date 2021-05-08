@@ -1,29 +1,32 @@
 const router = require('express').Router()
 const axios = require('axios')
+var mysql = require('mysql');
 
+
+// create a connection variable with the required details
+var con = mysql.createConnection({
+  host: "digicoviddb.clmftprgwipd.us-east-1.rds.amazonaws.com", // ip address of server running mysql
+  user: "admin", // user name to your mysql database
+  password: "digi.covid.1", // corresponding password
+  database: "Test" // use the specified database
+});
+
+con.connect(function(err) {
+    if (err) throw err;
+    // if connection is successful
+   console.log('connection successful');
+  });
+  
 // define the default route that fetches all of our notes
 router.get('/', async function (req, res) {
 
     // data the conserves our API quota for development
-    const placeholderData = [
-        {
-            "_id": "database1591127768852",
-            "note": "Hello",
-            "_createdOn": "2020-06-02T19:56:08.852Z",
-            "_lastModifiedOn": "2020-06-02T19:56:08.852Z"
-        },
-        {
-            "_id": "database1591134992139",
-            "note": "New note",
-            "_createdOn": "2020-06-02T21:56:32.139Z",
-            "_lastModifiedOn": "2020-06-02T21:56:32.139Z"
-        }
-    ]
-
     try {
         // add api call
-
-        res.json({ notes: placeholderData })
+        con.query('SELECT * FROM note', function(err,result,fields) {
+            res.json({ notes: result })
+        })
+        
     } catch (e) {
         console.log(e)
         res.status(500).send('Error.')
@@ -34,18 +37,18 @@ router.post('/add', async function (req, res) {
     // extract note text from request body
     const { note } = req.body
 
-    const data = {
-        note
-    }
+    const data = req.body.note
 
     console.log(note)
 
     try {
         // add api call
-
-        res.json({
-            message: 'Note added'
+        con.query(`INSERT INTO note (note) VALUES ('${data}')`, function(err,result,fields){
+            res.json({
+                message: result
+            })
         })
+        
     } catch (e) {
         console.log(e)
         res.status(500).send("Error.")
@@ -54,9 +57,9 @@ router.post('/add', async function (req, res) {
 
 router.post('/delete', async function (req, res) {
     // extract the note id to delete from request body
-    const { noteId } = req.body
+    const { idnote } = req.body
 
-    console.log(noteId)
+    console.log(req.body)
 
     try {
         // add api call
